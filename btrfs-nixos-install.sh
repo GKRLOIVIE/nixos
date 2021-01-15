@@ -16,6 +16,6 @@ nixos-generate-config --root /mnt/
 
 # edit the config; see
 # https://nixos.org/nixos/manual/index.html#sec-installation
-vim /mnt/etc/nixos/configuration.nix
+nano /mnt/etc/nixos/configuration.nix
 nixos-install
 reboot
