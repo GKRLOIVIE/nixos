@@ -53,10 +53,10 @@
 #xorg 
    services.xserver.enable = true;
   # Enable the Plasma 5 Desktop Environment.
-  services.xserver.displayManager.sddm.enable = true;
+ # services.xserver.displayManager.sddm.enable = true;
   services.xserver.displayManager.autoLogin.enable = true;
   services.xserver.displayManager.autoLogin.user = "shahov";
- # services.xserver.displayManager.lightdm.enable = true;
+  services.xserver.displayManager.lightdm.enable = true;
   services.xserver.desktopManager.plasma5.enable = true;
  # services.xserver.windowManager.exwm.enable = true;
 
@@ -69,7 +69,7 @@
   #services.printing.drivers = [];
   # Enable sound.
    sound.enable = true;
-   hardware.pulseaudio.enable = false;
+   hardware.pulseaudio.enable = true;
 services.jack = {
     jackd.enable = true;
     # support ALSA only programs via ALSA JACK PCM plugin
@@ -106,9 +106,10 @@ coreutils
 binutils
 killall
 sudo
-doas
+#doas
 nano
 vim
+#dunst
 #files
 ark
 wget
@@ -116,7 +117,7 @@ unrar
 zip
 unzip
 # GUI for sound control
-#pavucontrol
+pavucontrol
 qjackctl
 #Terminal
 alacritty
@@ -134,8 +135,7 @@ discord
 zoom-us
 # games
 # wine-staging
-#wineWowPackages.stable
-#wineWowPackages.staging
+steam-run-native
 lutris-unwrapped
 vulkan-loader
 vulkan-tools
@@ -147,12 +147,16 @@ lmms
 
    ];
 nixpkgs.config.allowUnfree = true;
-
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
+  steam = pkgs.steam.override {
+      nativeOnly = true;
+    }; 
   };
+  
+nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
 
  users.users.shahov.packages = with pkgs; [
    (wineWowPackages.full.override {
@@ -163,6 +167,8 @@ nixpkgs.config.allowUnfree = true;
      wine = wineWowPackages.staging;
    })
  ];
+  
+ # programs.steam.enable = true;
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -205,7 +211,7 @@ nix.gc = {
  
   programs.fish.enable = true;
 
-  users.users.foo = {
+  users.users.shahov = {
     shell = pkgs.fish;
   };
   
