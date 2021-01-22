@@ -8,7 +8,6 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      #./cachix.nix
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -16,7 +15,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
   boot.blacklistedKernelModules = [ "nouveau" ];
- 
+  boot.plymouth.enable = true;
 
    networking.hostName = "sasha-nix"; # Define your hostname.
    networking.networkmanager.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -45,11 +44,12 @@
 
    #Nvidia
    services.xserver.videoDrivers = [ "nvidia" ];
-# Vulkan 
- hardware.opengl.driSupport32Bit = true;
+# Vulkan
+  hardware.opengl.driSupport = true;	 
+  hardware.opengl.driSupport32Bit = true;
   hardware.opengl.enable = true;
   hardware.pulseaudio.support32Bit = true;
-  hardware.opengl.driSupport = true;
+  
 
 #xorg 
    services.xserver.enable = true;
@@ -102,15 +102,13 @@ security.sudo.configFile = ''%wheel ALL=(ALL) ALL'';
   # $ nix search wget
    environment.systemPackages = with pkgs; [
    # systemutils
-bash
 coreutils
 binutils
 killall
 sudo
 nano
 vim
-#dunst
-#Files
+#files
 ark
 wget
 unrar
@@ -123,51 +121,73 @@ qjackctl
 alacritty
 # office
 dolphin
-kdeApplications.okular
+okular
 emacs
-# network
+#Network
 firefox
 tdesktop
 discord
 zoom-us
-# games
-#wine
-steam-run-native
+# Games
+#wine-staging
+steam
+steam-run
+playonlinux
 lutris-unwrapped
 vulkan-loader
 vulkan-tools
-#steam
-playonlinux
 libreoffice-fresh
 #Audio
-vocal
 ardour
-lmms
-
+vocal
    ];
 nixpkgs.config.allowUnfree = true;
+
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
-  steam = pkgs.steam.override {
-      nativeOnly = true;
-    }; 
-  };
+
+  #steam = pkgs.steam.override {
+ #     nativeOnly = true;
+  #  };
+#extraPkgs = pkgs: [
+ #       libgdiplus
+  #    ]; 
+ # };
+
+    };
+ nixpkgs.overlays = [
+    (self: super: {
+      steam-run = (super.steam.override {
+        extraLibraries = pkgs: with pkgs;
+          [
+            libxkbcommon
+            mesa
+          #  wayland
+         #   (sndio.overrideAttrs (old: {
+          #    postFixup = old.postFixup + ''
+           #     ln -s $out/lib/libsndio.so $out/lib/libsndio.so.6.1
+            #  '';
+           # }))
+          ];
+      }).run;
+    })
+  ];
   
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
 
- #users.users.sasha.packages = with pkgs; [
-   #(wineWowPackages.full.override {
-     #wineRelease = "staging";
-    # mingwSupport = true;
-  # })
- #  (winetricks.override {
-  #   wine = wineWowPackages.staging;
-  # })
- #];
+ users.users.sasha.packages = with pkgs; [
+   (wineWowPackages.full.override {
+     wineRelease = "staging";
+     mingwSupport = true;
+   })
+   (winetricks.override {
+     wine = wineWowPackages.staging;
+   })
+ ];
   
- # programs.steam.enable = true;
+ 
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -198,7 +218,7 @@ services.blueman.enable = true;
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "21.03"; # Did you read the comment?
+  system.stateVersion = "20.09"; # Did you read the comment?
   system.autoUpgrade.enable = true;
 nix.gc = {
   automatic = true;
@@ -206,6 +226,15 @@ nix.gc = {
   options = "--delete-older-than 30d";
 };
 
+# Set limits for esync.
+systemd.extraConfig = "DefaultLimitNOFILE=1048576";
+
+security.pam.loginLimits = [{
+    domain = "*";
+    type = "hard";
+    item = "nofile";
+    value = "1048576";
+}];
 
  
   programs.fish.enable = true;
