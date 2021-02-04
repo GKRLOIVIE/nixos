@@ -8,12 +8,14 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+#	./steam.nix
     ];
-
+# swapDevices = [ { device = "/swapfile"; size = 2048; } ];
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
+  boot.kernelPackages = pkgs.linuxPackages_zen;
   boot.blacklistedKernelModules = [ "nouveau" ];
   boot.plymouth.enable = true;
 
@@ -45,9 +47,9 @@
    #Nvidia
    services.xserver.videoDrivers = [ "nvidia" ];
 # Vulkan
+  hardware.opengl.enable = true;
   hardware.opengl.driSupport = true;	 
   hardware.opengl.driSupport32Bit = true;
-  hardware.opengl.enable = true;
   hardware.pulseaudio.support32Bit = true;
   
 
@@ -107,16 +109,21 @@ coreutils
 binutils
 killall
 sudo
+libgdiplus
 #doas
 nano
 vim
 #dunst
+appimage-run
 #files
 ark
 wget
 unrar
 zip
 unzip
+#
+cargo
+rustup
 # GUI for sound control
 pavucontrol
 qjackctl
@@ -124,25 +131,38 @@ qjackctl
 alacritty
 # office
 dolphin
-#kdeApplications.okular
+okular
 emacs26
 emacs26Packages.doom
 sonic-pi
 emacs26Packages.sonic-pi
 #Network
-firefox
+firefox-bin
 tdesktop
 discord
+matterbridge
 zoom-us
+remmina
+#transmission-qt
+#vuze
+frostwire-bin
 # Games
 
-#wine-staging
-steam
-steam-run
+wine-staging
+ajour
+#steam
+steam-run-native
+linux-steam-integration
+(steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib ];
+nativeOnly = true; }).run
+  (steam.override { withPrimus = true; extraPkgs = pkgs: [ bumblebee glxinfo ];
+nativeOnly = true; }).run
+  (steam.override { withJava = true; })
 playonlinux
 lutris-unwrapped
 vulkan-loader
 vulkan-tools
+vulkan-headers
 libreoffice-fresh
 #Audio
 ardour
@@ -150,38 +170,13 @@ lmms
 
    ];
 nixpkgs.config.allowUnfree = true;
-
+# unstable = import <nixos-unstable> {};
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
-
-  #steam = pkgs.steam.override {
- #     nativeOnly = true;
-  #  };
-#extraPkgs = pkgs: [
- #       libgdiplus
-  #    ]; 
- # };
-
-    };
- nixpkgs.overlays = [
-    (self: super: {
-      steam-run = (super.steam.override {
-        extraLibraries = pkgs: with pkgs;
-          [
-            libxkbcommon
-            mesa
-          #  wayland
-         #   (sndio.overrideAttrs (old: {
-          #    postFixup = old.postFixup + ''
-           #     ln -s $out/lib/libsndio.so $out/lib/libsndio.so.6.1
-            #  '';
-           # }))
-          ];
-      }).run;
-    })
-  ];
+ };
+programs.steam.enable = true;
   
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
 
@@ -195,7 +190,7 @@ nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
    })
  ];
   
- 
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
