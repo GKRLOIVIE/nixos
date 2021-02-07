@@ -8,15 +8,15 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-#	./steam.nix
     ];
 # swapDevices = [ { device = "/swapfile"; size = 2048; } ];
+
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
   boot.kernelPackages = pkgs.linuxPackages_zen;
-  boot.blacklistedKernelModules = [ "nouveau" ];
+  
   boot.plymouth.enable = true;
 
    networking.hostName = "shahov-nix"; # Define your hostname.
@@ -45,34 +45,48 @@
    };
 
    #Nvidia
+   boot.blacklistedKernelModules = [ "nouveau" ];
    services.xserver.videoDrivers = [ "nvidia" ];
-# Vulkan
+   
+   #Vulkan
   hardware.opengl.enable = true;
   hardware.opengl.driSupport = true;	 
   hardware.opengl.driSupport32Bit = true;
+  hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
   hardware.pulseaudio.support32Bit = true;
   
 
-#xorg 
-   services.xserver.enable = true;
+  #Xorg
+
+services.xserver.enable = true;
+   
+   #Wayland
+
+  #services.xserver.displayManager.gdm.wayland=true;
+  #services.xserver.displayManager.gdm.nvidiaWayland=true;
+  #programs.xwayland.enable=true;
+  #hardware.nvidia.modesetting.enable = true;
+   
   # Enable the Plasma 5 Desktop Environment.
- # services.xserver.displayManager.sddm.enable = true;
-  services.xserver.displayManager.autoLogin.enable = true;
-  services.xserver.displayManager.autoLogin.user = "shahov";
   services.xserver.displayManager.lightdm.enable = true;
   services.xserver.desktopManager.plasma5.enable = true;
- # services.xserver.windowManager.exwm.enable = true;
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = "shahov";
+ #services.xserver.windowManager.exwm.enable = true;
 
   # Configure keymap in X11
   # services.xserver.layout = "us";
   # services.xserver.xkbOptions = "eurosign:e";
 
   # Enable CUPS to print documents.
-   #services.printing.enable = true;
+  #services.printing.enable = true;
   #services.printing.drivers = [];
+
+
   # Enable sound.
    sound.enable = true;
    hardware.pulseaudio.enable = true;
+  #hardware.pulseaudio.package = pkgs.pulseaudioFull;
 services.jack = {
     jackd.enable = true;
     # support ALSA only programs via ALSA JACK PCM plugin
@@ -99,43 +113,50 @@ services.jack = {
      home = "/home/shahov";
        description = "Anatolii Shahov";
    };
-security.sudo.configFile = ''%wheel ALL=(ALL) ALL'';
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
+  
    environment.systemPackages = with pkgs; [
-   # systemutils
+   # Systemutils
 bash
 coreutils
 binutils
 killall
-sudo
 libgdiplus
-#doas
+doas
 nano
-vim
+neovim
+neofetch
+#Terminal
+alacritty
+#Rust
+cargo
+rustup
+#Java
+adoptopenjdk-jre-bin
 #dunst
+libsForQt512.plasma-applet-caffeine-plus
 appimage-run
-#files
+pantheon.sideload
+#Files
 ark
 wget
 unrar
 zip
 unzip
-#
-cargo
-rustup
+
 # GUI for sound control
 pavucontrol
 qjackctl
-#Terminal
-alacritty
-# office
+
+# Office
+hunspell
+hunspellDicts.en-us
+hunspellDicts.ru-ru
 dolphin
 okular
-emacs26
-emacs26Packages.doom
 sonic-pi
-emacs26Packages.sonic-pi
 #Network
 firefox-bin
 tdesktop
@@ -147,16 +168,14 @@ remmina
 #vuze
 frostwire-bin
 # Games
-
 wine-staging
 ajour
 #steam
-steam-run-native
-linux-steam-integration
-(steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib ];
-nativeOnly = true; }).run
+steam-run
+(steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib libxkbcommon ];
+nativeOnly = false; }).run
   (steam.override { withPrimus = true; extraPkgs = pkgs: [ bumblebee glxinfo ];
-nativeOnly = true; }).run
+nativeOnly = false; }).run
   (steam.override { withJava = true; })
 playonlinux
 lutris-unwrapped
@@ -169,14 +188,42 @@ ardour
 lmms
 
    ];
-nixpkgs.config.allowUnfree = true;
-# unstable = import <nixos-unstable> {};
+   
+   #Unfree
+   nixpkgs.config.allowUnfree = true;
+   #Broken
+   #nixpkgs.config.allowBroken = true;
+   
+   # unstable = import <nixos-unstable> {};
+   
+   #NUR
   nixpkgs.config.packageOverrides = pkgs: {
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
  };
+ 
+ #Steam
 programs.steam.enable = true;
+
+#Flatpack
+services.flatpak.enable = true;
+#xdg.portal.enable = true;
+
+  #Emacs
+ services.emacs.enable = true;
+ services.emacs.package = with pkgs; (emacsWithPackages (with emacsPackagesNg; [
+      evil
+      nix-mode
+      haskell-mode
+      python-mode
+      intero
+      org
+      sonic-pi
+      #doom   
+      mastodon
+      emms
+  ]));
   
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
 
@@ -220,30 +267,31 @@ services.blueman.enable = true;
   # on your system were taken. It‘s perfectly fine and recommended to leave
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+# (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
+
   system.stateVersion = "20.09"; # Did you read the comment?
   system.autoUpgrade.enable = true;
 nix.gc = {
   automatic = true;
   dates = "weekly";
-  options = "--delete-older-than 30d";
+  options = "--delete-older-than 10d";
 };
 
 # Set limits for esync.
-systemd.extraConfig = "DefaultLimitNOFILE=1048576";
+#systemd.extraConfig = "DefaultLimitNOFILE=1048576";
 
-security.pam.loginLimits = [{
-    domain = "*";
-    type = "hard";
-    item = "nofile";
-    value = "1048576";
-}];
+#security.pam.loginLimits = [{
+ #   domain = "*";
+ #   type = "hard";
+ #   item = "nofile";
+ #   value = "1048576";
+#}];
 
- 
-  programs.fish.enable = true;
+ #Shell
+  programs.zsh.enable = true;
 
   users.users.shahov = {
-    shell = pkgs.fish;
+    shell = pkgs.zsh;
   };
   
 
