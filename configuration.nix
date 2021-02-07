@@ -113,6 +113,11 @@ services.jack = {
      home = "/home/shahov";
        description = "Anatolii Shahov";
    };
+   
+security.doas.extraRules = [{
+    users = [ "shahov" ];
+    keepEnv = true;
+}];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -159,6 +164,7 @@ okular
 sonic-pi
 #Network
 firefox-bin
+castor
 tdesktop
 discord
 matterbridge
