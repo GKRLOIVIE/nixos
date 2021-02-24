@@ -9,14 +9,22 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
-# swapDevices = [ { device = "/swapfile"; size = 2048; } ];
+  # swapDevices = [ { device = "/swapfile"; size = 2048; } ];
+  
+#Zram
+zramSwap.enable = true;
+zramSwap.memoryPercent = 200;
+
+#Btrfs
+services.btrfs.autoScrub.enable = true;
+services.btrfs.autoScrub.interval = "weekly";
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
-  boot.kernelPackages = pkgs.linuxPackages_zen;
-  
+ #boot.kernelPackages = pkgs.linuxPackages_zen;
+  boot.kernelPackages = pkgs.linuxPackages_latest_xen_dom0;
   boot.plymouth.enable = true;
 
    networking.hostName = "shahov-nix"; # Define your hostname.
@@ -53,6 +61,7 @@
   hardware.opengl.driSupport = true;	 
   hardware.opengl.driSupport32Bit = true;
   hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
+  hardware.opengl.setLdLibraryPath = true;
   hardware.pulseaudio.support32Bit = true;
   
 
@@ -63,15 +72,15 @@ services.xserver.enable = true;
    #Wayland
 
   #services.xserver.displayManager.gdm.wayland=true;
-  #services.xserver.displayManager.gdm.nvidiaWayland=true;
-  #programs.xwayland.enable=true;
+  #services.xserver.displayManager.gdm.nvidiaWayland = true;
+  #programs.xwayland.enable = true;
   #hardware.nvidia.modesetting.enable = true;
    
   # Enable the Plasma 5 Desktop Environment.
   services.xserver.displayManager.lightdm.enable = true;
-  services.xserver.desktopManager.plasma5.enable = true;
   services.xserver.displayManager.autoLogin.enable = true;
   services.xserver.displayManager.autoLogin.user = "shahov";
+  services.xserver.desktopManager.plasma5.enable = true;
  #services.xserver.windowManager.exwm.enable = true;
 
   # Configure keymap in X11
@@ -86,14 +95,14 @@ services.xserver.enable = true;
   # Enable sound.
    sound.enable = true;
    hardware.pulseaudio.enable = true;
-  #hardware.pulseaudio.package = pkgs.pulseaudioFull;
+  hardware.pulseaudio.package = pkgs.pulseaudioFull;
 services.jack = {
-    jackd.enable = true;
+    jackd.enable = false;
     # support ALSA only programs via ALSA JACK PCM plugin
     alsa.enable = false;
     # support ALSA only programs via loopback device (supports programs like Steam)
     loopback = {
-      enable = true;
+      enable = false;
       # buffering parameters for dmix device to work with ALSA only semi-professional sound programs
       #dmixConfig = ''
       #  period_size 2048
@@ -114,8 +123,10 @@ services.jack = {
        description = "Anatolii Shahov";
    };
    
+   #Doas
+security.doas.enable = true;   
 security.doas.extraRules = [{
-    users = [ "shahov" ];
+    users = [ "1001" ];
     keepEnv = true;
 }];
 
@@ -133,6 +144,10 @@ doas
 nano
 neovim
 neofetch
+youtube-dl
+tartube
+gst_all_1.gstreamer
+thefuck
 #Terminal
 alacritty
 #Rust
@@ -141,9 +156,8 @@ rustup
 #Java
 adoptopenjdk-jre-bin
 #dunst
-libsForQt512.plasma-applet-caffeine-plus
+#libsForQt512.plasma-applet-caffeine-plus
 appimage-run
-pantheon.sideload
 #Files
 ark
 wget
@@ -159,40 +173,70 @@ qjackctl
 hunspell
 hunspellDicts.en-us
 hunspellDicts.ru-ru
+nur.repos.onny.onlyoffice-desktopeditors
 dolphin
+mucommander
+mc
+krusader
+#xfe
 okular
 sonic-pi
 #Network
 firefox-bin
+theharvester
 castor
 tdesktop
+element-desktop
+signal-desktop
 discord
 matterbridge
 zoom-us
 remmina
-#transmission-qt
+transmission
 #vuze
 frostwire-bin
 # Games
-wine-staging
+#wine-staging
+wine
 ajour
+nur.repos.afreakk.wowup
 #steam
-steam-run
-(steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib libxkbcommon ];
+steam-run-native
+ (steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib libxkbcommon];
 nativeOnly = false; }).run
   (steam.override { withPrimus = true; extraPkgs = pkgs: [ bumblebee glxinfo ];
 nativeOnly = false; }).run
-  (steam.override { withJava = true; })
+(steam.override { withJava = true; })
+steamcmd
 playonlinux
-lutris-unwrapped
+lutris
 vulkan-loader
 vulkan-tools
 vulkan-headers
-libreoffice-fresh
+ryujinx
+obs-studio
+
 #Audio
 ardour
 lmms
+#haskellPackages.vision
 
+#Video
+vlc
+
+etcher
+nur.repos.mhuesch.pmbootstrap
+
+#Art
+gwenview
+meshlab
+inkscape
+nur.repos.tilpner.primitive
+krita
+gmic-qt-krita
+inkscape
+
+anki
    ];
    
    #Unfree
@@ -207,8 +251,17 @@ lmms
     nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
       inherit pkgs;
     };
- };
+  };
+
  
+  
+  #Nix-community overlay
+   nixpkgs.overlays = [
+    (import (builtins.fetchTarball {
+      url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
+    }))
+   ];
+   
  #Steam
 programs.steam.enable = true;
 
@@ -223,11 +276,14 @@ services.flatpak.enable = true;
       nix-mode
       haskell-mode
       python-mode
-      intero
+      #intero
       org
       sonic-pi
-      #doom   
+      #doom
+      graphene
+      graphene-meta-theme
       mastodon
+      pocket-reader
       emms
   ]));
   
@@ -265,8 +321,8 @@ nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
   # networking.firewall.enable = false;
 
 # Bluetooth
-hardware.bluetooth.enable = true;
-services.blueman.enable = true;
+#hardware.bluetooth.enable = true;
+#services.blueman.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -293,12 +349,20 @@ nix.gc = {
  #   value = "1048576";
 #}];
 
- #Shell
-  programs.zsh.enable = true;
-
+#Shell
+# programs.zsh.ohMyZsh.theme = "romkatv/powerlevel10k";
+programs.zsh = {
+  enable = true;
+  autosuggestions.enable = true;
+  ohMyZsh.enable = true;
+  ohMyZsh.plugins = [ "git dirhistory colorize emacs systemd thefuck zsh-interactive-cd web-search" ];
+  ohMyZsh.theme = "fino-time";
+  syntaxHighlighting.enable = true;
+};
   users.users.shahov = {
     shell = pkgs.zsh;
   };
+
   
 
 }
