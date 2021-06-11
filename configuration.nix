@@ -27,8 +27,10 @@ services.btrfs.autoScrub.interval = "weekly";
   boot.kernelPackages = pkgs.linuxPackages_latest_xen_dom0;
   boot.plymouth.enable = true;
 
+
+  
    networking.hostName = "shahov-nix"; # Define your hostname.
-   networking.networkmanager.enable = true;  # Enables wireless support via wpa_supplicant.
+   networking.networkmanager.enable = true;  # Enables wireless support via networkmanager.
 
   # Set your time zone.
   time.timeZone = "Europe/Moscow";
@@ -60,7 +62,9 @@ services.btrfs.autoScrub.interval = "weekly";
   hardware.opengl.enable = true;
   hardware.opengl.driSupport = true;	 
   hardware.opengl.driSupport32Bit = true;
-  hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
+  hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux;
+    [ libva ]
+    ++ lib.optionals config.services.pipewire.enable [ pipewire ];
   hardware.opengl.setLdLibraryPath = true;
   hardware.pulseaudio.support32Bit = true;
   
@@ -93,22 +97,24 @@ services.xserver.enable = true;
 
 
   # Enable sound.
-   sound.enable = true;
-   hardware.pulseaudio.enable = true;
-  hardware.pulseaudio.package = pkgs.pulseaudioFull;
-services.jack = {
-    jackd.enable = false;
-    # support ALSA only programs via ALSA JACK PCM plugin
-    alsa.enable = false;
-    # support ALSA only programs via loopback device (supports programs like Steam)
-    loopback = {
-      enable = false;
-      # buffering parameters for dmix device to work with ALSA only semi-professional sound programs
-      #dmixConfig = ''
-      #  period_size 2048
-      #'';
-    };
-  };
+  
+ # Remove sound.enable or turn it off if you had it set previously, it seems to cause conflicts with pipewire
+sound.enable = false;
+
+# rtkit is optional but recommended
+security.rtkit.enable = true;
+services.pipewire = {
+  enable = true;
+  alsa.enable = true;
+  alsa.support32Bit = true;
+  pulse.enable = true;
+  # If you want to use JACK applications, uncomment this
+  #jack.enable = true;
+
+  # use the example session manager (no others are packaged yet so this is enabled by default,
+  # no need to redefine it in your config for now)
+  #media-session.enable = true;
+};
 
   users.extraUsers.shahov.extraGroups = [ "jackaudio" ]; 
 
@@ -126,7 +132,7 @@ services.jack = {
    #Doas
 security.doas.enable = true;   
 security.doas.extraRules = [{
-    users = [ "1001" ];
+    users = [ "shahov" ];
     keepEnv = true;
 }];
 
@@ -135,18 +141,15 @@ security.doas.extraRules = [{
   
    environment.systemPackages = with pkgs; [
    # Systemutils
-bash
 coreutils
 binutils
 killall
-libgdiplus
 doas
 nano
 neovim
 neofetch
 youtube-dl
 tartube
-gst_all_1.gstreamer
 thefuck
 #Terminal
 alacritty
@@ -156,7 +159,7 @@ rustup
 #Java
 adoptopenjdk-jre-bin
 #dunst
-#libsForQt512.plasma-applet-caffeine-plus
+plasma-applet-caffeine-plus
 appimage-run
 #Files
 ark
@@ -173,47 +176,52 @@ qjackctl
 hunspell
 hunspellDicts.en-us
 hunspellDicts.ru-ru
-nur.repos.onny.onlyoffice-desktopeditors
+#nur.repos.onny.onlyoffice-desktopeditors
 dolphin
 mucommander
 mc
 krusader
+mindforger
 #xfe
 okular
 sonic-pi
 #Network
-firefox-bin
+firefox
+nyxt
+netsurf.browser
+torbrowser
 theharvester
 castor
 tdesktop
+kotatogram-desktop
 element-desktop
-signal-desktop
+pidgin-with-plugins
 discord
+betterdiscord-installer
+ripcord
+mattermost-desktop
 matterbridge
-zoom-us
+#zoom-us
 remmina
-transmission
+transmission-qt
 #vuze
 frostwire-bin
+
 # Games
 #wine-staging
-wine
 ajour
-nur.repos.afreakk.wowup
-#steam
-steam-run-native
- (steam.override { extraPkgs = pkgs: [ mono gtk3 gtk3-x11 libgdiplus zlib libxkbcommon];
-nativeOnly = false; }).run
-  (steam.override { withPrimus = true; extraPkgs = pkgs: [ bumblebee glxinfo ];
-nativeOnly = false; }).run
-(steam.override { withJava = true; })
-steamcmd
+#adom
+yuzu-ea
+#Steam
+#steam-run-native
+#steamcmd
+
+legendary-gl
 playonlinux
 lutris
 vulkan-loader
 vulkan-tools
 vulkan-headers
-ryujinx
 obs-studio
 
 #Audio
@@ -224,46 +232,61 @@ lmms
 #Video
 vlc
 
-etcher
-nur.repos.mhuesch.pmbootstrap
-
 #Art
 gwenview
 meshlab
 inkscape
-nur.repos.tilpner.primitive
+#nur.repos.tilpner.primitive
 krita
 gmic-qt-krita
 inkscape
 
 anki
+etcher 
+gparted
+qdirstat
+
+mtpfs
+jmtpfs
    ];
    
    #Unfree
    nixpkgs.config.allowUnfree = true;
+   
    #Broken
    #nixpkgs.config.allowBroken = true;
    
    # unstable = import <nixos-unstable> {};
    
    #NUR
-  nixpkgs.config.packageOverrides = pkgs: {
-    nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
-      inherit pkgs;
+ # nixpkgs.config.packageOverrides = pkgs: {
+ #   nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+ #     inherit pkgs;
+ #   };  
+ # };
+
+   nixpkgs.config = { packageOverrides = pkgs:
+     with pkgs; {
+      pidgin-with-plugins = pkgs.pidgin-with-plugins.override {
+        ## Add whatever plugins are desired (see nixos.org package listing).
+        plugins = [ pidginotr pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
+      };
     };
   };
 
- 
-  
+   
+   
   #Nix-community overlay
    nixpkgs.overlays = [
     (import (builtins.fetchTarball {
       url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
     }))
    ];
+
    
  #Steam
 programs.steam.enable = true;
+hardware.steam-hardware.enable = true;
 
 #Flatpack
 services.flatpak.enable = true;
@@ -275,7 +298,7 @@ services.flatpak.enable = true;
       evil
       nix-mode
       haskell-mode
-      python-mode
+     # python-mode
       #intero
       org
       sonic-pi
@@ -286,8 +309,11 @@ services.flatpak.enable = true;
       pocket-reader
       emms
   ]));
-  
+
+
+ 
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
+services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
 
  users.users.shahov.packages = with pkgs; [
    (wineWowPackages.full.override {
@@ -321,8 +347,8 @@ nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
   # networking.firewall.enable = false;
 
 # Bluetooth
-#hardware.bluetooth.enable = true;
-#services.blueman.enable = true;
+hardware.bluetooth.enable = true;
+services.blueman.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -331,7 +357,7 @@ nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
   # Before changing this value read the documentation for this option
 # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
 
-  system.stateVersion = "20.09"; # Did you read the comment?
+  system.stateVersion = "21.05"; # Did you read the comment?
   system.autoUpgrade.enable = true;
 nix.gc = {
   automatic = true;
