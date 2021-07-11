@@ -23,8 +23,8 @@ services.btrfs.autoScrub.interval = "weekly";
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
- #boot.kernelPackages = pkgs.linuxPackages_zen;
-  boot.kernelPackages = pkgs.linuxPackages_latest_xen_dom0;
+#  boot.kernelPackages = pkgs.linuxPackages_xanmod; 
+  boot.kernelPackages = pkgs.linuxPackages_zen;
   boot.plymouth.enable = true;
 
 
@@ -109,7 +109,7 @@ services.pipewire = {
   alsa.support32Bit = true;
   pulse.enable = true;
   # If you want to use JACK applications, uncomment this
-  #jack.enable = true;
+  jack.enable = true;
 
   # use the example session manager (no others are packaged yet so this is enabled by default,
   # no need to redefine it in your config for now)
@@ -126,7 +126,7 @@ services.pipewire = {
      isNormalUser = true;
      extraGroups = [ "wheel audio networkmanager" ]; # Enable ‘sudo’ for the user.
      home = "/home/shahov";
-       description = "Anatolii Shahov";
+     description = "Anatolii Shahov";
    };
    
    #Doas
@@ -140,160 +140,169 @@ security.doas.extraRules = [{
   # $ nix search wget
   
    environment.systemPackages = with pkgs; [
-   # Systemutils
-coreutils
-binutils
+   #Systemutils
 killall
-doas
 nano
-neovim
+appimage-run
 neofetch
-youtube-dl
-tartube
 thefuck
+softether
 #Terminal
 alacritty
-#Rust
-cargo
-rustup
+kitty
 #Java
 adoptopenjdk-jre-bin
-#dunst
+
+
+#kde
+latte-dock
 plasma-applet-caffeine-plus
-appimage-run
+libsForQt5.kwin-tiling
+libsForQt5.kdeconnect-kde
+
+
 #Files
 ark
 wget
 unrar
 zip
+subversion
 unzip
+dolphin
+mc
+krusader
+syncthing
 
 # GUI for sound control
 pavucontrol
 qjackctl
 
 # Office
+libreoffice-qt
 hunspell
 hunspellDicts.en-us
 hunspellDicts.ru-ru
-#nur.repos.onny.onlyoffice-desktopeditors
-dolphin
-mucommander
-mc
-krusader
+nur.repos.onny.onlyoffice-desktopeditors
 mindforger
+obsidian
 #xfe
 okular
-sonic-pi
+qimgv
+
+
+joplin-desktop
+freemind
+anki
+
 #Network
 firefox
 nyxt
 netsurf.browser
 torbrowser
 theharvester
-castor
-tdesktop
 kotatogram-desktop
 element-desktop
-pidgin-with-plugins
+mirage-im
+nheko
+fractal
+#rambox
 discord
 betterdiscord-installer
 ripcord
-mattermost-desktop
-matterbridge
 #zoom-us
 remmina
-transmission-qt
-#vuze
-frostwire-bin
-
-# Games
-#wine-staging
-ajour
-#adom
-yuzu-ea
-#Steam
-#steam-run-native
-#steamcmd
-
-legendary-gl
-playonlinux
-lutris
-vulkan-loader
-vulkan-tools
-vulkan-headers
-obs-studio
+tigervnc
+qbittorrent
 
 #Audio
+amarok
+clementineUnfree
+spotify
+spotify-qt
+#swaglyrics
+mopidy-iris
 ardour
 lmms
+sonic-pi
 #haskellPackages.vision
 
 #Video
 vlc
+tartube
+
+# Games
+#wine-staging
+#ajour
+yuzu-ea
+#Steam
+legendary-gl
+lutris
+obs-studio
+#adom
+tome4
+nethack-qt
 
 #Art
 gwenview
 meshlab
-inkscape
 #nur.repos.tilpner.primitive
 krita
 gmic-qt-krita
 inkscape
 
-anki
-etcher 
 gparted
 qdirstat
 
 mtpfs
 jmtpfs
+
+(pidgin-with-plugins.override {
+        plugins = [ pidginotr pidgin-xmpp-receipts purple-lurch purple-facebook  pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
+    })
    ];
    
    #Unfree
    nixpkgs.config.allowUnfree = true;
    
    #Broken
-   #nixpkgs.config.allowBroken = true;
+   nixpkgs.config.allowBroken = true;
    
    # unstable = import <nixos-unstable> {};
    
    #NUR
- # nixpkgs.config.packageOverrides = pkgs: {
- #   nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
- #     inherit pkgs;
- #   };  
- # };
-
-   nixpkgs.config = { packageOverrides = pkgs:
-     with pkgs; {
-      pidgin-with-plugins = pkgs.pidgin-with-plugins.override {
-        ## Add whatever plugins are desired (see nixos.org package listing).
-        plugins = [ pidginotr pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
-      };
-    };
+  nixpkgs.config.packageOverrides = pkgs: {
+    nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+     inherit pkgs;
+    };  
   };
-
-   
-   
+ 
   #Nix-community overlay
-   nixpkgs.overlays = [
+  nixpkgs.overlays = [
     (import (builtins.fetchTarball {
       url = https://github.com/nix-community/emacs-overlay/archive/master.tar.gz;
-    }))
+    }))    
    ];
 
+
+   
+   
+#LogMeIn Hamachi
+services.logmein-hamachi.enable = true;
    
  #Steam
 programs.steam.enable = true;
 hardware.steam-hardware.enable = true;
 
-#Flatpack
+#Flatpak
 services.flatpak.enable = true;
 #xdg.portal.enable = true;
 
+#Gamemode
+programs.gamemode.enable = true;
+
   #Emacs
  services.emacs.enable = true;
+ #services.emacs.package = pkgs.emacsUnstable;
  services.emacs.package = with pkgs; (emacsWithPackages (with emacsPackagesNg; [
       evil
       nix-mode
@@ -302,7 +311,7 @@ services.flatpak.enable = true;
       #intero
       org
       sonic-pi
-      #doom
+     # doom
       graphene
       graphene-meta-theme
       mastodon
@@ -310,7 +319,7 @@ services.flatpak.enable = true;
       emms
   ]));
 
-
+ 
  
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
 services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
@@ -323,6 +332,11 @@ services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
    (winetricks.override {
      wine = wineWowPackages.staging;
    })
+   
+    (pidgin-with-plugins.override {
+        plugins = [ pidginotr pidgin-xmpp-receipts purple-lurch purple-facebook  pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
+    })
+   
  ];
   
 
@@ -349,6 +363,7 @@ services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
 # Bluetooth
 hardware.bluetooth.enable = true;
 services.blueman.enable = true;
+# hardware.bluetooth.package = "pkgs.bluezFull";
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
