@@ -8,12 +8,21 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      #  ./wayland.nix
+     # ./matrix.nix
     ];
   # swapDevices = [ { device = "/swapfile"; size = 2048; } ];
   
 #Zram
 zramSwap.enable = true;
 zramSwap.memoryPercent = 200;
+
+#EarlyOOM
+
+services.earlyoom.enable = true;
+
+
+services.auto-cpufreq.enable = true;
 
 #Btrfs
 services.btrfs.autoScrub.enable = true;
@@ -23,10 +32,11 @@ services.btrfs.autoScrub.interval = "weekly";
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "ntfs" ];
-#  boot.kernelPackages = pkgs.linuxPackages_xanmod; 
-  boot.kernelPackages = pkgs.linuxPackages_zen;
+  #boot.kernelPackages = pkgs.linuxPackages_xanmod;
+ # boot.kernelPackages = pkgs.linuxPackages_zen;
+  boot.kernelPackages = pkgs.linuxPackages_lqx;
   boot.plymouth.enable = true;
-
+  
 
   
    networking.hostName = "shahov-nix"; # Define your hostname.
@@ -47,12 +57,7 @@ services.btrfs.autoScrub.interval = "weekly";
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
-  # Select internationalisation properties.
-   i18n.defaultLocale = "ru_RU.UTF-8";
-   console = {
-     font = "cyr-sun16";
-     keyMap = "us";
-   };
+  
 
    #Nvidia
    boot.blacklistedKernelModules = [ "nouveau" ];
@@ -71,21 +76,19 @@ services.btrfs.autoScrub.interval = "weekly";
 
   #Xorg
 
-services.xserver.enable = true;
+  services.xserver.enable = true;
+  #services.xserver.xkbModel = "pc87";
    
-   #Wayland
-
-  #services.xserver.displayManager.gdm.wayland=true;
-  #services.xserver.displayManager.gdm.nvidiaWayland = true;
-  #programs.xwayland.enable = true;
-  #hardware.nvidia.modesetting.enable = true;
-   
-  # Enable the Plasma 5 Desktop Environment.
+  # Enable Desktop Environment.
   services.xserver.displayManager.lightdm.enable = true;
   services.xserver.displayManager.autoLogin.enable = true;
   services.xserver.displayManager.autoLogin.user = "shahov";
+  
+#  services.xserver.windowManager.awesome.enable = true;
+  #services.xserver.windowManager.awesome.package = [ awesome ];
+ # services.xserver.windowManager.awesome.luaModules = [ pkgs.lua53Packages.vicious ];
   services.xserver.desktopManager.plasma5.enable = true;
- #services.xserver.windowManager.exwm.enable = true;
+  
 
   # Configure keymap in X11
   # services.xserver.layout = "us";
@@ -99,11 +102,11 @@ services.xserver.enable = true;
   # Enable sound.
   
  # Remove sound.enable or turn it off if you had it set previously, it seems to cause conflicts with pipewire
-sound.enable = false;
+#sound.enable = true;
 
 # rtkit is optional but recommended
 security.rtkit.enable = true;
-services.pipewire = {
+ services.pipewire = {
   enable = true;
   alsa.enable = true;
   alsa.support32Bit = true;
@@ -149,16 +152,21 @@ thefuck
 softether
 #Terminal
 alacritty
-kitty
 #Java
-adoptopenjdk-jre-bin
+jre8
+#adoptopenjdk-jre-bin
+jdk8
+openjfx15
 
 
-#kde
+
+#Kde
 latte-dock
 plasma-applet-caffeine-plus
-libsForQt5.kwin-tiling
+#libsForQt5.kwin-tiling
 libsForQt5.kdeconnect-kde
+libsForQt514.qtstyleplugin-kvantum
+#libsForQt512.discover
 
 
 #Files
@@ -166,11 +174,14 @@ ark
 wget
 unrar
 zip
-subversion
 unzip
+
 dolphin
 mc
 krusader
+
+bleachbit
+
 syncthing
 
 # GUI for sound control
@@ -182,13 +193,9 @@ libreoffice-qt
 hunspell
 hunspellDicts.en-us
 hunspellDicts.ru-ru
-nur.repos.onny.onlyoffice-desktopeditors
 mindforger
 obsidian
 #xfe
-okular
-qimgv
-
 
 joplin-desktop
 freemind
@@ -196,10 +203,8 @@ anki
 
 #Network
 firefox
-nyxt
-netsurf.browser
 torbrowser
-theharvester
+
 kotatogram-desktop
 element-desktop
 mirage-im
@@ -208,11 +213,15 @@ fractal
 #rambox
 discord
 betterdiscord-installer
-ripcord
+qtox
+
 #zoom-us
+
 remmina
 tigervnc
 qbittorrent
+webtorrent_desktop
+
 
 #Audio
 amarok
@@ -220,11 +229,10 @@ clementineUnfree
 spotify
 spotify-qt
 #swaglyrics
-mopidy-iris
 ardour
 lmms
 sonic-pi
-#haskellPackages.vision
+renoise
 
 #Video
 vlc
@@ -240,11 +248,15 @@ lutris
 obs-studio
 #adom
 tome4
-nethack-qt
+
+#nur.repos.mweinelt.trinitycore_335
 
 #Art
+qimgv
 gwenview
+okular
 meshlab
+cura
 #nur.repos.tilpner.primitive
 krita
 gmic-qt-krita
@@ -256,9 +268,21 @@ qdirstat
 mtpfs
 jmtpfs
 
-(pidgin-with-plugins.override {
-        plugins = [ pidginotr pidgin-xmpp-receipts purple-lurch purple-facebook  pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
-    })
+(pidgin.override {
+  plugins = [ pidginotr pidgin-xmpp-receipts purple-lurch purple-facebook  pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];  })
+
+    lbry
+    tangram
+    newsflash
+    michabo
+    hydrus   
+    tribler
+
+    #Audio Visualizer
+glava
+projectm
+
+
    ];
    
    #Unfree
@@ -287,7 +311,7 @@ jmtpfs
    
    
 #LogMeIn Hamachi
-services.logmein-hamachi.enable = true;
+#services.logmein-hamachi.enable = true;
    
  #Steam
 programs.steam.enable = true;
@@ -295,10 +319,13 @@ hardware.steam-hardware.enable = true;
 
 #Flatpak
 services.flatpak.enable = true;
-#xdg.portal.enable = true;
+xdg.portal.enable = true;
 
 #Gamemode
 programs.gamemode.enable = true;
+
+#Syncthing
+services.syncthing.enable = true;
 
   #Emacs
  services.emacs.enable = true;
@@ -315,14 +342,12 @@ programs.gamemode.enable = true;
       graphene
       graphene-meta-theme
       mastodon
-      pocket-reader
       emms
   ]));
 
  
  
 nixpkgs.config.firefox.enablePlasmaBrowserIntegration = true;
-services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
 
  users.users.shahov.packages = with pkgs; [
    (wineWowPackages.full.override {
@@ -332,10 +357,6 @@ services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
    (winetricks.override {
      wine = wineWowPackages.staging;
    })
-   
-    (pidgin-with-plugins.override {
-        plugins = [ pidginotr pidgin-xmpp-receipts purple-lurch purple-facebook  pidgin-window-merge purple-plugin-pack purple-matrix purple-discord telegram-purple purple-vk-plugin pidgin-opensteamworks ];
-    })
    
  ];
   
@@ -363,21 +384,15 @@ services.xserver.desktopManager.plasma5.phononBackend = "gstreamer";
 # Bluetooth
 hardware.bluetooth.enable = true;
 services.blueman.enable = true;
-# hardware.bluetooth.package = "pkgs.bluezFull";
+#hardware.bluetooth.package = "pkgs.bluezFull";
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-# (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-
-  system.stateVersion = "21.05"; # Did you read the comment?
+ 
+  system.stateVersion = "21.11"; 
   system.autoUpgrade.enable = true;
 nix.gc = {
   automatic = true;
   dates = "weekly";
-  options = "--delete-older-than 10d";
+  options = "--delete-older-than 1d";
 };
 
 # Set limits for esync.
@@ -390,14 +405,22 @@ nix.gc = {
  #   value = "1048576";
 #}];
 
+# Select internationalisation properties.
+   i18n.defaultLocale = "ru_RU.UTF-8";
+   console = {
+     font = "cyr-sun16";
+     keyMap = "us";
+   };
+
 #Shell
 # programs.zsh.ohMyZsh.theme = "romkatv/powerlevel10k";
 programs.zsh = {
   enable = true;
   autosuggestions.enable = true;
   ohMyZsh.enable = true;
-  ohMyZsh.plugins = [ "git dirhistory colorize emacs systemd thefuck zsh-interactive-cd web-search" ];
-  ohMyZsh.theme = "fino-time";
+  ohMyZsh.plugins = [ " git dirhistory colorize emacs systemd thefuck zsh-interactive-cd web-search" ];
+ ohMyZsh.theme = "fino-time";
+ # ohMyZsh.theme = "powerline-go";
   syntaxHighlighting.enable = true;
 };
   users.users.shahov = {
